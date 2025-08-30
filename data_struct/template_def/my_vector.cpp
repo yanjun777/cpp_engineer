@@ -52,14 +52,9 @@ void testMyVec_2(){
 
 void testMyVec_3(){
     vector<int> vec(50); 
-    // vec.reserve(50);
-    // 应该弄一个reserve的！
-    for(int i = 0; i < 20; ++i){
+    for(int i = 0; i < 5; ++i){
         vec.push_back(rand() % 100 + 1);
-        // vec[i] = rand() % 100 + 1;
-        // vec[i] = i; 
     }
-    // // 引用or值  指针8byte int 看平台
     for(auto elem : vec){
         std::cout<<elem<<" ";
     }

@@ -171,6 +171,8 @@ public:
             iterator_base *itb = new iterator_base(this, pvec_->head_.next_);
             pvec_->head_.next_ = itb;
         }
+
+
         // 需要注意两点
         // 1. 迭代器是否有效
         // 2. 逻辑比较的时候 迭代器所指向的对象是否一致！（不仅需要类型，还需要同一个对象）
@@ -278,7 +280,7 @@ public:
         // 先判断是否够容量 todo 
         // 判断it.ptr_ 合法性 todo  （实际写代码需要考虑的问题）
         // 检查迭代器 
-        verify(it.ptr_,last_); 
+        // verify(it.ptr_,last_); 
         // 将元素后移动 双指针 (尽量原地移动)
             // 我觉得这里可以使用memcpy 或者是移动构造 ， 因为指向的资源是相同的！ 
             // 拷贝构造那里不能直接memcpy 因为对象可能占有资源 
@@ -311,7 +313,7 @@ public:
             p++; 
         }
         // 最后也有说法的！注意要删除的元素是谁？ 以及维护last_
-        allocator_.destory(p);
+        allocator_.destroy(p);
         last_--;
         // 返回
         return iterator(this,it.ptr_); 
