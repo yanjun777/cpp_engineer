@@ -1,0 +1,79 @@
+# --- 基本忽略 ---
+# 编译输出
+*.o
+*.obj
+*.lo
+*.slo
+*.ko
+*.dll
+*.so
+*.so.*
+*.dylib
+*.a
+*.lib
+*.la
+*.exe
+*.out
+*.app
+
+# --- CMake 相关 ---
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+CTestTestfile.cmake
+install_manifest.txt
+
+# --- 常见 IDE/编辑器 ---
+# VSCode
+.vscode/
+*.code-workspace
+
+# CLion / JetBrains
+.idea/
+
+# Visual Studio
+*.vcxproj
+*.vcxproj.*
+*.sln
+*.suo
+*.ncb
+*.opendb
+*.idb
+*.pdb
+
+# Xcode
+*.xcworkspace
+*.xcodeproj
+*.xcuserdata
+
+# --- 临时文件 ---
+*~
+*.swp
+*.swo
+*.tmp
+*.log
+
+# --- 系统文件 ---
+.DS_Store
+Thumbs.db
+
+# --- 生成的测试或运行文件 ---
+/bin/
+/build/
+/build-*/
+/dist/
+/debug/
+/release/
+/out/
+
+# --- 覆盖率/分析工具 ---
+*.gcno
+*.gcda
+*.gcov
+*.prof
+*.profraw
+
+# --- 依赖下载/缓存 ---
+*.dSYM/
