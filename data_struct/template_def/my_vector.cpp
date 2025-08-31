@@ -51,7 +51,7 @@ void testMyVec_2(){
 #endif 
 
 void testMyVec_3(){
-    vector<int> vec(50); 
+    vector<int> vec; // 改为空vector，避免默认构造的0元素
     for(int i = 0; i < 5; ++i){
         vec.push_back(rand() % 100 + 1);
     }
@@ -62,18 +62,18 @@ void testMyVec_3(){
 #if 1
     // 在偶数前插入比偶数小1的数
     std::cout<<"-----------"<<std::endl;
-    auto it_1 = vec.begin();
-    for(; it_1 != vec.end(); ++it_1){
-        if((*it_1 % 2) == 0){
-            it_1 = vec.insert(it_1,(*it_1) - 1); 
-            ++it_1; 
+    // 使用索引遍历，避免迭代器失效问题
+    for(int i = 0; i < vec.size(); ++i){
+        if((vec[i] % 2) == 0){
+            vec.insert(vec.begin() + i, vec[i] - 1);
+            ++i; // 跳过刚插入的元素
         }
     }
     for(auto elem : vec){
             std::cout<<elem<<" ";
         }
         std::cout<<std::endl;
-    std::cout<<"-----------"<<std::endl;
+        std::cout<<"-----------"<<std::endl;
 #endif 
     
 #if 0
@@ -96,9 +96,41 @@ void testMyVec_3(){
     
 }
 
+void testMyVec_4(){
+    vector<int> vec;
+    for(int i = 0; i < 5; ++i){
+        vec.push_back(rand() % 100 + 1);
+    }
+    std::cout << "原始vector: ";
+    for(auto elem : vec){
+        std::cout<<elem<<" ";
+    }
+    std::cout<<std::endl;
+    
+    // 使用你原来的逻辑：在偶数前插入比偶数小1的数
+    std::cout<<"使用迭代器插入偶数前的数:"<<std::endl;
+    auto it_1 = vec.begin();
+    for(; it_1 != vec.end(); ++it_1){
+        if((*it_1 % 2) == 0){
+            it_1 = vec.insert(it_1,(*it_1) - 1); 
+            ++it_1; 
+        }
+    }
+    
+    std::cout<<"插入后的vector: ";
+    for(auto elem : vec){
+        std::cout<<elem<<" ";
+    }
+    std::cout<<std::endl;
+}
+
 
 int main(){
+    std::cout << "=== 测试1：使用索引遍历 ===" << std::endl;
     testMyVec_3();
+    
+    std::cout << "\n=== 测试2：使用迭代器遍历 ===" << std::endl;
+    testMyVec_4();
 
     return 0; 
 }

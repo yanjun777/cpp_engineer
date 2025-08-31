@@ -77,8 +77,8 @@ public:
     {
         // 在这里如果直接使用 rhs[] 重载[]会发生报错！
         // const 引用无法调用 非const 成员函数
-        // 输入指针应该是判断地址是否一致  8.30 
-        // 输入两个值应该是判断内容是否想等  
+        // 输入指针应该是判断地址是否一致  8.30
+        // 输入两个值应该是判断内容是否想等
         if (&rhs == this)
             return *this;
 
@@ -105,20 +105,22 @@ public:
     T &operator[](int i)
     {
         // 我们可以跑出异常 如果我们不跑出异常 1.可能编译不过 2.可能数组抛出 段错误
-        // int capacity = end_ - first_; 
+        // int capacity = end_ - first_;
         // 如果按照capacity 方式取构建 会导致last_维护失效
-        if (i < 0 || i >= size()) {
+        if (i < 0 || i >= size())
+        {
             throw std::out_of_range("index out of range");
         }
         return first_[i];
     }
     const T &operator[](int i) const
     {
-        // int capacity = end_ - first_; 
-        if (i < 0 || i >= size()) {
+        // int capacity = end_ - first_;
+        if (i < 0 || i >= size())
+        {
             throw std::out_of_range("index out of range");
         }
-        return first_[i]; 
+        return first_[i];
     }
 
     void push_back(const T &elem)
@@ -138,7 +140,7 @@ public:
         if (empty())
             return;
         // last_--;
-        verify(last_-1,last_ );
+        verify(last_ - 1, last_);
         --last_;
         allocator_.destroy(last_);
     }
@@ -146,7 +148,6 @@ public:
     {
         return *(last_ - 1);
     }
-    
 
     bool empty() const
     {
@@ -160,6 +161,42 @@ public:
     {
         return last_ - first_;
     }
+    
+    int capacity() const
+    {
+        return end_ - first_;
+    }
+    
+    void reserve(int new_cap)
+    {
+        if (new_cap <= capacity())
+            return;
+            
+        int len = size();
+        T *old = first_;
+        
+        first_ = allocator_.allocate(new_cap);
+        for (int i = 0; i < len; ++i)
+        {
+            allocator_.construct(first_ + i, old[i]);
+        }
+        for (T *p = old; p != last_; ++p)
+            allocator_.destroy(p);
+        allocator_.deallocate(old);
+        
+        last_ = first_ + len;
+        end_ = first_ + new_cap;
+    }
+    
+    void clear()
+    {
+        for (T *p = first_; p != last_; p++)
+        {
+            allocator_.destroy(p);
+        }
+        last_ = first_;
+    }
+
     class iterator
     {
     public:
@@ -168,10 +205,7 @@ public:
         iterator(vector<T, Alloc> *pvec = nullptr, T *src = nullptr)
             : pvec_(pvec), ptr_(src)
         {
-            iterator_base *itb = new iterator_base(this, pvec_->head_.next_);
-            pvec_->head_.next_ = itb;
         }
-
 
         // 需要注意两点
         // 1. 迭代器是否有效
@@ -179,12 +213,12 @@ public:
         bool operator==(const iterator &rhs) const
         {
             // 不同类型容器的迭代器不能相互比较 这里输入参数都不对 难道还能往下运行？
-            
-            if ( pvec_ == nullptr)
+
+            if (pvec_ == nullptr)
             {
                 throw std::runtime_error("iterator invalid! ");
             }
-            if ( this->pvec_ != rhs.pvec_)
+            if (this->pvec_ != rhs.pvec_)
             {
                 throw std::logic_error("iterator incompatible");
             }
@@ -192,11 +226,11 @@ public:
         }
         bool operator!=(const iterator &rhs) const
         {
-            if ( pvec_ == nullptr)
+            if (pvec_ == nullptr)
             {
                 throw std::runtime_error("iterator invalid! ");
             }
-            if ( this->pvec_ != rhs.pvec_)
+            if (this->pvec_ != rhs.pvec_)
             {
                 throw std::logic_error("iterator incompatible");
             }
@@ -234,7 +268,109 @@ public:
             {
                 throw std::runtime_error("invalid iterator");
             }
-            return iterator(pvec_,ptr_++);
+            return iterator(pvec_, ptr_++);
+        }
+        
+        // 前置递减
+        iterator &operator--()
+        {
+            if (pvec_ == nullptr)
+            {
+                throw std::runtime_error("invalid iterator");
+            }
+            --ptr_;
+            return *this;
+        }
+        
+        iterator operator--(int)
+        {
+            if (pvec_ == nullptr)
+            {
+                throw std::runtime_error("invalid iterator");
+            }
+            return iterator(pvec_, ptr_--);
+        }
+        
+        // 比较操作符
+        bool operator<(const iterator &rhs) const
+        {
+            if (pvec_ == nullptr || rhs.pvec_ == nullptr)
+            {
+                throw std::runtime_error("invalid iterator");
+            }
+            if (this->pvec_ != rhs.pvec_)
+            {
+                throw std::logic_error("iterator incompatible");
+            }
+            return this->ptr_ < rhs.ptr_;
+        }
+        
+        bool operator<=(const iterator &rhs) const
+        {
+            return (*this < rhs) || (*this == rhs);
+        }
+        
+        bool operator>(const iterator &rhs) const
+        {
+            return !(*this <= rhs);
+        }
+        
+        bool operator>=(const iterator &rhs) const
+        {
+            return !(*this < rhs);
+        }
+        
+        // 算术运算操作符
+        iterator operator+(int n) const
+        {
+            if (pvec_ == nullptr)
+            {
+                throw std::runtime_error("invalid iterator");
+            }
+            return iterator(pvec_, ptr_ + n);
+        }
+        
+        iterator operator-(int n) const
+        {
+            if (pvec_ == nullptr)
+            {
+                throw std::runtime_error("invalid iterator");
+            }
+            return iterator(pvec_, ptr_ - n);
+        }
+        
+        int operator-(const iterator &rhs) const
+        {
+            if (pvec_ == nullptr || rhs.pvec_ == nullptr)
+            {
+                throw std::runtime_error("invalid iterator");
+            }
+            if (this->pvec_ != rhs.pvec_)
+            {
+                throw std::logic_error("iterator incompatible");
+            }
+            return this->ptr_ - rhs.ptr_;
+        }
+        
+        // 复合赋值操作符
+        iterator &operator+=(int n)
+        {
+            if (pvec_ == nullptr)
+            {
+                throw std::runtime_error("invalid iterator");
+            }
+            ptr_ += n;
+            return *this;
+        }
+        
+        iterator &operator-=(int n)
+        {
+            if (pvec_ == nullptr)
+            {
+                throw std::runtime_error("invalid iterator");
+            }
+            ptr_ -= n;
+            return *this;
         }
 
     private:
@@ -252,73 +388,76 @@ public:
     {
         return iterator(this, end_);
     }
-    // todo 需要添加一个 verify private函数：用于检查迭代器失效问题
-    void verify(T *first, T *last)
+    
+    // const版本
+    const iterator begin() const
     {
-        iterator_base *pre = &(this->head_); 
-        iterator_base *it = head_.next_; 
-        while(it != nullptr){
-            // (] //边界问题 
-            // ? poanle 包含边界的！ 
-            if(it->cur_->ptr_ >= first && it->cur_->ptr_ <= last ){
-                // 迭代器失效
-                it->cur_->pvec_ = nullptr; 
-                // 
-                it = it->next_; 
-                delete pre->next_; 
-                pre->next_ = it; 
-
-            }else{
-                pre = it;
-                it = it->next_; 
-            }
+        return iterator(const_cast<vector<T, Alloc>*>(this), first_);
+    }
+    const iterator end() const
+    {
+        return iterator(const_cast<vector<T, Alloc>*>(this), end_);
+    }
+    void check_iter(const iterator &it) const
+    {
+        if (it.pvec_ != this || it.ptr_ < first_ || it.ptr_ > last_)
+        {
+            throw std::logic_error("iterator incompatible or out of range");
         }
     }
+
     // insert 还需要判断是否扩容
-    iterator insert(iterator it,const T& val)
+    iterator insert(iterator it, const T &val)
     {
-        // 先判断是否够容量 todo 
-        // 判断it.ptr_ 合法性 todo  （实际写代码需要考虑的问题）
-        // 检查迭代器 
-        // verify(it.ptr_,last_); 
-        // 将元素后移动 双指针 (尽量原地移动)
-            // 我觉得这里可以使用memcpy 或者是移动构造 ， 因为指向的资源是相同的！ 
-            // 拷贝构造那里不能直接memcpy 因为对象可能占有资源 
-        T* p = last_; 
-        while(p != it.ptr_){
-            allocator_.construct(p,*(p-1));
-            allocator_.destroy(p-1);
-            p--; 
+        check_iter(it); // 只校验传入 it
+        
+        T *pos = it.ptr_;
+        int offset = pos - first_; // 保存相对位置
+        
+        if (full())
+            expand(); // 需要时扩容
+        
+        // 扩容后需要重新计算pos，因为first_可能已经改变
+        pos = first_ + offset;
+        
+        if (pos == last_)
+        {
+            allocator_.construct(last_, val);
+            ++last_;
+            return iterator(this, pos);
         }
-        allocator_.construct(p,val);
-        //维护last_
-        last_++;
-        // 返回
-        return iterator(this,p); 
+
+        // 1) 在未构造区（last_）placement new 一份尾元素
+        allocator_.construct(last_, *(last_ - 1));
+
+        // 2) 已构造区用赋值右移一格
+        for (T *p = last_ - 1; p != pos; --p)
+        {
+            *p = *(p - 1);
+        }
+
+        // 3) 覆写插入点
+        *pos = val;
+        ++last_;
+        return iterator(this, pos);
     }
 
     // erase
     iterator erase(iterator it)
     {
-        T* p = it.ptr_;
-        // 检查迭代器 
-        verify(it.ptr_,last_); 
-        // 将元素后移动 双指针 (尽量原地移动)
-        // 我觉得这里可以使用memcpy 或者是移动构造 ， 因为指向的资源是相同的！ 
-        // 拷贝构造那里不能直接memcpy 因为对象可能占有资源 
-         
-        while(p+1 != this->last_){
-            allocator_.destroy(p);
-            allocator_.construct(p,*(p+1));
-            p++; 
-        }
-        // 最后也有说法的！注意要删除的元素是谁？ 以及维护last_
-        allocator_.destroy(p);
-        last_--;
-        // 返回
-        return iterator(this,it.ptr_); 
-    }
+        check_iter(it);
+        if (it.ptr_ >= last_)
+            throw std::logic_error("erase at end()");
 
+        T *pos = it.ptr_;
+        for (T *p = pos; p + 1 != last_; ++p)
+        {
+            *p = *(p + 1);
+        }
+        --last_;
+        allocator_.destroy(last_);
+        return iterator(this, pos);
+    }
 
 private:
     T *first_;
@@ -327,42 +466,26 @@ private:
     Alloc allocator_;
     void expand()
     {
-        int size = end_ - first_;
-        // 思路优化 应该给 temptr创新空间然后构造
-        T *temptr = first_;
-        // first_ = new T[size * 2];
-        first_ = allocator_.allocate(size * 2);
-        for (int i = 0; i < size; i++)
+        int cap = end_ - first_;
+        int len = last_ - first_;
+        T *old = first_;
+
+        int new_cap = cap ? cap * 2 : 1;
+        first_ = allocator_.allocate(new_cap);
+        for (int i = 0; i < len; ++i)
         {
-            // first_[i] = temptr[i];
-            allocator_.construct(first_ + i, temptr[i]);
+            allocator_.construct(first_ + i, old[i]); // 只拷贝 len 个
         }
-        // delete[] temptr;
-        // temptr = nullptr;
-        for (T *p = temptr; p != last_; p++)
-        {
+        for (T *p = old; p != last_; ++p)
             allocator_.destroy(p);
-        }
-        allocator_.deallocate(temptr);
-        temptr = nullptr;
+        allocator_.deallocate(old);
 
-        end_ = first_ + 2 * size;
-        last_ = first_ + size;
+        end_ = first_ + new_cap;
+        last_ = first_ + len;
+        
+        // 注意：扩容后，所有指向旧内存的迭代器都会失效
+        // 这就是为什么在insert中需要保存相对位置的原因
     }
-    // todo 需要再添加一个迭代器链表结构
-    struct iterator_base
-    {
-        iterator_base(iterator *cur = nullptr, iterator_base *next = nullptr)
-            : cur_(cur), next_(next)
-        {
-        }
-        iterator *cur_;
-        iterator_base *next_;
-    };
-    // todo 需要添加一个私有成员  迭代器链表的头节点（变量）
-    iterator_base head_; // 构造的时候就传入一个nullptr 不传也可以...
-
-    // pop_back insert erase 需要verify
 };
 
 class Test
@@ -380,5 +503,6 @@ public:
     {
         std::cout << "~Test()" << std::endl;
     }
+
 private:
 };
