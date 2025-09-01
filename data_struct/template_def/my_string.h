@@ -1,5 +1,6 @@
 #include<cstring>
 #include <ostream>
+#include<iostream>
 
 class String{
 public:
@@ -13,15 +14,25 @@ public:
             cptr_ = new char[1];
             cptr_[0] = '\0';
         }
+        std::cout<<"const char* src "<<std::endl;
     }
     ~String(){
         delete[] cptr_;
         cptr_ = nullptr; 
+        std::cout<<" ~String "<<std::endl;
     }
     String(const String& rhs){
         cptr_ = new char[strlen(rhs.cptr_)+1];
         strcpy(cptr_,rhs.cptr_); 
+        std::cout<<"const String& rhs "<<std::endl;
     }
+    String(String&& rhs ){
+        cptr_ = rhs.cptr_;
+        rhs.cptr_ = nullptr; 
+        std::cout<<"String&& rhs "<<std::endl;
+    }
+    
+
     String& operator=(const String& rhs){
         if(rhs == *this ) return *this; 
         // 先xigou 再拷贝
@@ -29,6 +40,19 @@ public:
         // 
         cptr_ = new char[strlen(rhs.cptr_)+1];
         strcpy(cptr_,rhs.cptr_); 
+        std::cout<<"operator=(const String& rhs) "<<std::endl;
+        
+        return *this; 
+    }
+
+    String& operator=(String&& rhs){
+        if(rhs == *this ) return *this; 
+        // 先xigou 再拷贝
+        delete[] cptr_;
+        // 
+        cptr_ = rhs.cptr_;
+        rhs.cptr_ = nullptr;
+        std::cout<<"operator=(String&& rhs) "<<std::endl;
         
         return *this; 
     }
@@ -96,10 +120,12 @@ private:
     // 都使用 const & 还能用“asd”构造
     friend String operator+(const String& lhs,const String& rhs ); 
     friend std::ostream& operator<<(std::ostream&out, String& src); 
+    friend String GetString(String &str);
 };
 
 String operator+(const String& lhs, const String& rhs){
     // 字符串拼接   
+    // 内存泄漏?? temp 析沟的时候会释放
     String temp; 
     temp.cptr_ = new char[strlen(lhs.cptr_)+strlen(rhs.cptr_)+1]; 
     strcpy(temp.cptr_,lhs.cptr_);
@@ -110,4 +136,13 @@ String operator+(const String& lhs, const String& rhs){
 std::ostream& operator<<(std::ostream&out, String& src){
     out<<src.cptr_;
     return out; 
+}
+
+String GetString(String &str){
+    // String temp; 
+    // temp.cptr_ = str.cptr_;
+    const char* pstr = str.cptr_; 
+    String temp(pstr);
+    // 拷贝构造
+    return temp;
 }

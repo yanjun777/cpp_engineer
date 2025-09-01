@@ -17,11 +17,22 @@ struct Allocator
         return;
     }
 
+    /*
     void construct(T *p, const T &val)
     {
         new (p) T(val);
         return;
     }
+    void construct(T *p, T&& val){
+        new (p) T(std::move(val)); //无论左值还是右值都需要构造！
+        return;
+    }
+    */
+   template<typename Ty>
+   void construct(T *p,Ty &&val){
+        new (p) T(std::forward<Ty>(val));
+        return ;
+   }
 
     void destroy(T *p)
     {
@@ -123,6 +134,7 @@ public:
         return first_[i];
     }
 
+    /*
     void push_back(const T &elem)
     {
         if (full())
@@ -135,6 +147,27 @@ public:
         allocator_.construct(last_, elem);
         last_++;
     }
+    void push_back(T&& val){
+        if(full()){
+            expand();
+        }
+        allocator_.construct(last_,std::move(val));
+        last_++; 
+    }
+    */
+   template <typename Ty>
+   void push_back(Ty &&val){
+        if(full()){
+            expand();
+        }
+
+        allocator_.construct(last_,std::forward<Ty>(val));
+        last_++;
+   }
+
+
+
+
     void pop_back()
     {
         if (empty())

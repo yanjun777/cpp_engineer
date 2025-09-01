@@ -1,6 +1,7 @@
 
 #include<iostream>
 #include<string>
+#include<vector>
 #include "my_string.h"
 using namespace std;
 
@@ -64,8 +65,26 @@ void test3(){
     cout<<endl; 
 }
 
+void test4(){
+    vector<String> vec;
+    // vec.reserve(5);
+    String s1= "1111";
+    vec.push_back(s1);
+    vec.push_back(String("aaa"));
+
+}
+
+void test5(){
+    String s1("fffffffffff");
+    String s2 ;
+    s2 = GetString(s1);
+    std::cout<<s2.c_str()<<std::endl;
+
+}
 int main(){
 
     // test2();
-    test3(); 
+    // test3(); 
+    // test4();
+    test5();
 }

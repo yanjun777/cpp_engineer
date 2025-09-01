@@ -1,7 +1,8 @@
 #include "my_vector.h"
 #include <cstdlib>
 #include <iostream>
-#include <vector>
+// #include <vector>
+#include "my_string.h"
 
 #if 0
 void testMyVec(){
@@ -59,7 +60,7 @@ void testMyVec_3(){
         std::cout<<elem<<" ";
     }
     std::cout<<std::endl;
-#if 1
+#if 0 
     // 在偶数前插入比偶数小1的数
     std::cout<<"-----------"<<std::endl;
     // 使用索引遍历，避免迭代器失效问题
@@ -124,13 +125,17 @@ void testMyVec_4(){
     std::cout<<std::endl;
 }
 
+void test4(){
+    vector<String> vec;
+    // vec.reserve(5);
+    String s1= "1111";
+    vec.push_back(s1);
+    vec.push_back(String("aaa"));
+
+}
 
 int main(){
-    std::cout << "=== 测试1：使用索引遍历 ===" << std::endl;
-    testMyVec_3();
     
-    std::cout << "\n=== 测试2：使用迭代器遍历 ===" << std::endl;
-    testMyVec_4();
-
+    test4();
     return 0; 
 }
