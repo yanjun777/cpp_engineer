@@ -60,6 +60,7 @@ public:
         mptr_ = rhs.mptr_;
         mpRefCnt_ = rhs.mpRefCnt_; 
         mpRefCnt_->addCnt();
+        return *this; 
     }
 
     T& operator*(){
