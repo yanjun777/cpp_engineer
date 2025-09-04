@@ -5,9 +5,21 @@
 #include "func_obj.h"
 #include <iostream>
 
-int main(){
+void test(){
     int a = 20,b = 30;
     bool res = myCompare(a,b,myGreater<int>); 
     std::cout<<"res: "<<res<<std::endl;
+}
+int add(int a,int b){
+    return a+b;
+}
 
+void test2(){
+    myFunction<int(int,int)> ptr1 = add; 
+    int res = ptr1(10,20);
+    std::cout<<"res:"<<res<<std::endl;
+}
+int main(){
+    
+    test2();
 }
