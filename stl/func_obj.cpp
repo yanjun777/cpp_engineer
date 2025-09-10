@@ -19,7 +19,14 @@ void test2(){
     int res = ptr1(10,20);
     std::cout<<"res:"<<res<<std::endl;
 }
+
+void test3(){
+    auto func1 = []()->void {
+        std::cout<<"hello_world"<<std::endl;
+    };
+    func1();
+}
 int main(){
     
-    test2();
+    test3();
 }
