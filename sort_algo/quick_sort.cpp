@@ -1,6 +1,7 @@
 #include<vector>
 #include<iostream>
 using namespace std; 
+// O(nlogn)
 
 int partition_lomuto(vector<int> &nums,int left, int right){
     // 单一指责
