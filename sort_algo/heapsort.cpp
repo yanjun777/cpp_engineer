@@ -1,7 +1,7 @@
 #include<iostream>
 #include<vector>
 using namespace std; 
-
+// O(nlogn)
 void heapify(vector<int> &nums, int n, int i){
     // 因为实际存储是用0 1 2 3 4 存储
     int largest = i;
