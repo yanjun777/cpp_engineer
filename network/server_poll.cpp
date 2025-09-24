@@ -48,8 +48,9 @@ int main() {
     if (listen(sockfd, 10) == -1) { perror("listen"); return -1; }
 
     struct pollfd fds[1024] = {0};
-    fds[0].fd = sockfd;
-    fds[0].events = POLLIN;
+    // 问题原因 fds[0]  但是下面判断fds[sockfd].revents & POLLIN
+    fds[sockfd].fd = sockfd;
+    fds[sockfd].events = POLLIN;
     int max_fd = sockfd;
 
     while(g_running.load()){
@@ -70,13 +71,39 @@ int main() {
             fds[client_fd].fd = client_fd;
             fds[client_fd].events = POLLIN;
             max_fd = client_fd;
+            printf("new client connected: %s\n", inet_ntoa(client_addr.sin_addr));
         }
         for(int i = sockfd + 1; i <= max_fd; i++){
-            if(fds[i].revents & POLLIN){
+            int ev = fds[i].revents;
+            if (ev & (POLLHUP | POLLERR | POLLNVAL)) {
+                // 对端关闭或出错：必须移除
+                close(fds[i].fd);
+                fds[i].fd = -1;
+                fds[i].events = 0;
+                continue;
+            }
+            if(ev & POLLIN){
+                
                 char buffer[1024];
+                memset(buffer, 0, sizeof(buffer));
                 ssize_t read_len = recv(i, buffer, sizeof(buffer), 0);
-                // printf("recv data: %s\n", buffer);
+                if (read_len < 0) {
+                    if (errno == EINTR) continue;      // 被信号打断，忽略本轮
+                    if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // 非阻塞才会遇到
+                    // 其他错误：关闭
+                    perror("recv");
+                    close(fds[i].fd);
+                    fds[i].fd = -1;
+                    fds[i].events = 0;
+                    continue;
+                }
+                // buffer 包含换行符
+                printf("buffer looks like: %s", buffer);
                 std::string msg(buffer, buffer + read_len);
+                while (!msg.empty() && (msg.back() == '\n' || msg.back() == '\r' || msg.back() == '\0')) {
+                    msg.pop_back();
+                }
+                // 没有正常退出会一直发送quit 
                 if(msg == "quit"){
                     fds[i].fd = -1;
                     fds[i].events = 0;
@@ -84,7 +111,6 @@ int main() {
                     continue;
                 }
                 send(i, buffer, read_len, 0);
-                printf("send data: %s\n", buffer);
             }
         }
     }
