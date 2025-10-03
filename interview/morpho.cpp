@@ -47,6 +47,9 @@ class derived3:public base2, public base3{
 // 静态多态
 // 重载 同一个作用域下，函数名相同 形参的类型顺序不同
 // 类模板 函数模板 变量的类型也作为一个类or函数的参数，对于某个功能可以不区分类型实现！ 
+
+// 隐藏是在子类中定义了一个与父类同名的函数，将父类的函数隐藏了
+// 使用base::hide() 仍然可以调用！ 
 int main(){
     std::cout<<"bas1 size "<<sizeof(base1)<<endl; 
     std::cout<<"bas2 size "<<sizeof(base2)<<endl; 
