@@ -1,5 +1,5 @@
 
-
+//  最好每次重置一下buffer 否则会很奇怪
 #include <iostream>
 #include <sys/socket.h>
 #include <errno.h>
@@ -32,6 +32,10 @@ struct connItem{
     int fd;
     char buffer[BUFFER_SIZE]; //指针 
     int index;
+    char recv_buffer[BUFFER_SIZE];
+    int recv_index;
+    char send_buffer[BUFFER_SIZE];
+    int send_index;
     union{
         Callback recv_cb;
         Callback listen_cb;
@@ -64,16 +68,16 @@ int recv_callback(int fd){
     // 接受buffer 
     // 打印
     // 设置事件状态
-    ssize_t read_len = recv(fd, conn_items[fd].buffer,BUFFER_SIZE-conn_items[fd].index, 0);
+    size_t recv_index = conn_items[fd].recv_index;
+    char * recv_buffer = conn_items[fd].recv_buffer;
+    ssize_t read_len = recv(fd, recv_buffer+recv_index,BUFFER_SIZE-recv_index, 0);
     if(read_len == 0){
         epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
         close(fd);
     }
-    // 更新index
-    conn_items[fd].index += read_len;
-    std::cout<<"recv len:"<<read_len<<std::endl;
+    
     // 打印消息
-    std::string msg(conn_items[fd].buffer, conn_items[fd].index);
+    std::string msg(recv_buffer+recv_index, conn_items[fd].recv_index);
     while (!msg.empty() && (msg.back() == '\n' || msg.back() == '\r' || msg.back() == '\0')) {
         msg.pop_back();
     }
@@ -83,17 +87,27 @@ int recv_callback(int fd){
         epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
         close(fd);
     }
+    // 更新index
+    conn_items[fd].recv_index += read_len;
+    std::cout<<"recv len:"<<read_len<<std::endl;
+    // echo 
+    memcpy(conn_items[fd].send_buffer,conn_items[fd].recv_buffer+recv_index,read_len);
+    conn_items[fd].send_index = read_len; 
+    set_event(fd,EPOLLOUT,0); 
     return read_len;
 }
 int send_callback(int fd){
     // 发送buffer 
     // 设置事件状态 
-    char *buffer = conn_items[fd].buffer;
-    ssize_t send_len = send(fd, buffer, conn_items[fd].index, 0);
+    // printf("fd %d sending msg",fd); 
+    std::cout<<"fd "<<fd<<" sending msg:"<<conn_items[fd].send_buffer;
+    char *buffer = conn_items[fd].send_buffer;
+    ssize_t send_len = send(fd, buffer, conn_items[fd].send_index, 0);
     if(send_len == -1){
         perror("send");
         return -1;
     }
+    memset(buffer,0,send_len);// send_len or send_index 
     set_event(fd, EPOLLIN, 0);
     return send_len;
 }
@@ -156,15 +170,15 @@ int main() {
             for(int i = 0; i < nready; i++){
                 int connfd = events[i].data.fd;
                 // 事件读取 
-                printf("reading event");
-                if(events[i].events && EPOLLIN ){
+                // printf("reading event\n");
+                if(events[i].events & EPOLLIN ){
                     if(connfd == sockfd){
                         int clientfd = conn_items[connfd].recv_t.listen_cb(connfd);
                         printf("new client connected: %d\n", clientfd); 
                     }else{
                         int recv_l = conn_items[connfd].recv_t.recv_cb(connfd);
                     }
-                }else if(events[i].events && EPOLLOUT){ 
+                }else if(events[i].events & EPOLLOUT){ 
                     int send_l = conn_items[connfd].send_cb(connfd);
                 }
             }
