@@ -14,15 +14,19 @@
 #include <csignal>
 #include <algorithm>
 #include <sys/epoll.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 // 循环控制
 static std::atomic<bool> g_running{true};
 // 缓冲区大小
-const int BUFFER_SIZE = 1024;
+const int BUFFER_SIZE = 9192;
 // 最大连接数
 const int MAX_CONN = 1024;
 typedef int (*Callback)(int);
 // epoll文件描述符
 int epoll_fd;
+
+#define ENABLE_HTTP_REQUEST 1
 
 void handle_sigint(int){
     g_running.store(false);
@@ -40,10 +44,41 @@ struct connItem{
         Callback recv_cb;
         Callback listen_cb;
     }recv_t;
+    char resource[BUFFER_SIZE]; 
     Callback send_cb;
 };
 // 连接项数组 
-connItem conn_items[MAX_CONN]; 
+connItem conn_items[MAX_CONN];
+
+#if ENABLE_HTTP_REQUEST
+    typedef struct connItem connection_t;
+    int http_response(connection_t *conn){
+        int file_fd = open("index.html", O_RDONLY);
+        if(file_fd == -1){
+            perror("open");
+            return -1;
+        }
+        struct stat file_stat;
+        fstat(file_fd, &file_stat);
+
+        conn->send_index = sprintf(conn->send_buffer,
+             "HTTP/1.1 200 OK\r\nContent-Length: %ld\r\n\r\n", 
+             file_stat.st_size);
+
+        ssize_t read_len = read(file_fd, conn->send_buffer+conn->send_index, BUFFER_SIZE-conn->send_index);
+        if(read_len == -1){
+            perror("read");
+            return -1;
+        }
+        conn->send_index += read_len; 
+        close(file_fd);
+        printf("responing request\n"); 
+        return conn->send_index;
+    }
+    int http_request(connection_t *conn){
+        return 0; 
+    }
+#endif
 
 void set_event(int fd, int event,int flag);
 int send_callback(int fd);
@@ -90,10 +125,18 @@ int recv_callback(int fd){
     // 更新index
     conn_items[fd].recv_index += read_len;
     std::cout<<"recv len:"<<read_len<<std::endl;
-    // echo 
+    // echo or response 
+#if ENABLE_HTTP_REQUEST
+    // http resquest handle 
+    // http_request(&conn_items[fd]);
+    http_response(&conn_items[fd]);
+#else
     memcpy(conn_items[fd].send_buffer,conn_items[fd].recv_buffer+recv_index,read_len);
     conn_items[fd].send_index = read_len; 
+#endif
     set_event(fd,EPOLLOUT,0); 
+
+    
     return read_len;
 }
 int send_callback(int fd){
