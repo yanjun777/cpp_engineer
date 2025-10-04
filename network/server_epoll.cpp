@@ -53,6 +53,7 @@ connItem conn_items[MAX_CONN];
 #if ENABLE_HTTP_REQUEST
     typedef struct connItem connection_t;
     int http_response(connection_t *conn){
+    #if 1
         int file_fd = open("index.html", O_RDONLY);
         if(file_fd == -1){
             perror("open");
@@ -74,6 +75,16 @@ connItem conn_items[MAX_CONN];
         close(file_fd);
         printf("responing request\n"); 
         return conn->send_index;
+    #else
+        conn->send_index = sprintf(conn->send_buffer,
+            "HTTP/1.1 200 OK\r\n"
+            "Accept-Ranges: bytes\r\n"
+            "Content-Length: 82\r\n"
+            "Content-Type: text/html\r\n"
+            "Date: Sat, 06 Aug 2023 13:16:46 GMT\r\n\r\n"
+            "<html><head><title>voice.king</title></head><body><h1>King</h1></body></html>\r\n\r\n\r\n");
+        return conn->send_index;
+    #endif
     }
     int http_request(connection_t *conn){
         return 0; 
